@@ -4,11 +4,15 @@
   const INSTRUMENTS = {
     chromatic: { label: 'Chromatic', strings: null },
     guitar: { label: 'Guitar · Standard', strings: [40, 45, 50, 55, 59, 64] },
+    dropd: { label: 'Guitar · Drop D', strings: [38, 45, 50, 55, 59, 64] },
+    dadgad: { label: 'Guitar · DADGAD', strings: [38, 45, 50, 55, 57, 62] },
     bass: { label: 'Bass · Standard', strings: [28, 33, 38, 43] },
+    bass5: { label: 'Bass · 5-string', strings: [23, 28, 33, 38, 43] },
     ukulele: { label: 'Ukulele · Standard', strings: [67, 60, 64, 69] } // re-entrant G
   };
   const IN_TUNE = 5;          // cents
-  const TUNED_AFTER = 0.6;    // seconds in tune before a string gets its check mark
+  const TUNED_AFTER = 0.25;   // seconds in tune before a string gets its check mark
+  const TUNED_TOLERANCE = 8;  // cents; a little looser than the green zone so a wobbling string still counts
   const IDLE_MS = 900;
   const BAR_STEP = 2.5;       // cents per bar in the bar view
 
@@ -111,9 +115,7 @@
     $('tuner-readout').dataset.state = good ? 'good' : '';
     $('tuner-note').textContent = V.notes.letter(m);
     $('tuner-oct').textContent = V.notes.octave(m);
-    const r = Math.round(cents);
-    $('tuner-sub').innerHTML = '';
-    $('tuner-sub').append(hz.toFixed(1) + ' Hz · ', el('b', { text: (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r) + '¢' }));
+    $('tuner-sub').textContent = hz.toFixed(1) + ' Hz';
 
     const clamped = Math.max(-50, Math.min(50, cents));
     if (needle) {
@@ -136,13 +138,11 @@
     }
     lastSeen = Date.now();
     const list = strings();
-    const m = list
-      ? list.reduce((best, s) => Math.abs(s - reading.midi) < Math.abs(best - reading.midi) ? s : best, list[0])
-      : Math.round(reading.midi);
+    const m = Math.round(reading.midi);
     if (m !== target) { target = m; smooth = null; holder.reset(); }
     const cents = (reading.midi - m) * 100;
     smooth = smooth === null ? cents : smooth + (cents - smooth) * 0.35;
-    if (list && holder.update(m + smooth / 100, m, IN_TUNE, TUNED_AFTER).passed) tuned.add(m);
+    if (list && list.includes(m) && holder.update(m + smooth / 100, m, TUNED_TOLERANCE, TUNED_AFTER).passed) tuned.add(m);
     show(m, smooth, reading.hz);
   }
 

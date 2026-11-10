@@ -1,15 +1,18 @@
-// Challenge: drop the ball. Sing a major scale from Do up to Do with no prompts. Each rung only
-// breaks, and lets the ball fall to the next, once you hold its note in tune. The clock runs
-// from Start until the last rung breaks.
+// Challenge, "Thread the Needle": sing a course of notes as fast as you can, from memory (or, on
+// the Echo level, by ear: each note is played as its wall arrives). A ball follows your pitch and each note is a wall with a hole at that note;
+// hold the ball in the hole to go through. Levels and courses are in courses.js; each level keeps
+// your best time.
 (function (V) {
   const { $, el, tuneState, formatTime } = V.ui;
-  const DEGREES = V.notes.MAJOR;
-  const METER_CENTS = 100;  // the side meter spans ± this many cents
+  const LEVELS = V.courses.LEVELS;
+  const level = () => LEVELS[V.store.get('challengeLevel')];
 
   const tracker = new V.pitch.Tracker();
   const holder = new V.pitch.Holder();
+  const game = V.ui.holeGame($('challenge-chart'), () => V.store.get('tolerance'),
+    (m) => V.notes.label(m, root(), V.store.get('names')).main);
   let phase = 'ready';      // ready | playing | done
-  let step = 0, startedAt = 0, finishedIn = 0, clock = null, unsubscribe = null;
+  let step = 0, startedAt = 0, finishedIn = 0, newBest = false, clock = null, unsubscribe = null;
 
   /** Lowest tonic whose octave fits inside the range, preferring C. */
   function defaultRoot() {
@@ -21,37 +24,38 @@
     return fits.find((r) => r % 12 === 0) || fits[0];
   }
   const root = () => { const r = V.store.get('challengeRoot'); return r === null ? defaultRoot() : r; };
-  const notes = () => DEGREES.map((d) => root() + d);
+  // The course is drawn once per run, so random levels stay put until you start again.
+  let course = null;
+  const newCourse = () => { course = V.courses.course(V.store.get('challengeLevel'), root()); };
+  const notes = () => { if (!course) newCourse(); return course; };
 
+  /** The walls, the header and the chips for each scale degree. */
   function renderLadder() {
-    const style = V.store.get('names');
-    const rungs = notes().map((m, i) => {
-      const label = V.notes.label(m, root(), style);
-      const state = phase === 'ready' ? '' : i < step ? 'done' : i === step && phase === 'playing' ? 'current' : '';
-      return el('div', { class: 'rung', 'data-state': state }, [
-        el('div', { class: 'rung-label' }, [
-          el('b', { text: label.main }),
-          el('small', { text: state === 'current' && label.aside ? ' · ' + label.aside : '' })
-        ]),
-        el('div', { class: 'rung-bar' }, [el('i'), el('i')])
-      ]);
-    });
-    $('challenge-ladder').replaceChildren(...rungs, el('div', { class: 'ball', id: 'challenge-ball' }));
-    placeBall();
+    const style = V.store.get('names'), list = notes();
+    const playing = phase === 'playing';
+    game.set(list, phase === 'done' ? list.length : step, root());
+    const current = list[Math.min(step, list.length - 1)], label = V.notes.label(current, root(), style);
+    $('challenge-cue').textContent = phase === 'done' ? '' : playing ? 'Sing' : 'Start on';
+    $('challenge-note').textContent = phase === 'done' ? '✓' : label.main;
+    $('challenge-aside').textContent = phase === 'done' ? '' : label.aside || '';
+    // Each chip takes its wall's colour: solid once cleared, outlined while it's the one to sing.
+    $('challenge-chips').replaceChildren(...list.map((m, i) => {
+      const done = phase === 'done' || i < step, current = playing && i === step;
+      return el('span', {
+        class: done ? 'done' : current ? 'current' : '',
+        style: done ? 'background:' + game.color(m) + ';color:#fff' : current ? 'background:transparent;color:inherit;box-shadow:inset 0 0 0 2px ' + game.color(m) : '',
+        text: V.notes.label(m, root(), style).main
+      });
+    }));
   }
 
-  function placeBall() {
-    const ball = $('challenge-ball');
-    const rungs = $('challenge-ladder').querySelectorAll('.rung');
-    const i = Math.min(step, rungs.length - 1);
-    const bar = rungs[i] && rungs[i].querySelector('.rung-bar');
-    if (!bar) return;
-    ball.style.transform = 'translate(-50%, ' + (bar.offsetTop - 36) + 'px)';
-    ball.hidden = phase === 'done';
+  function hitChip(i) {
+    const chip = $('challenge-chips').children[i];
+    if (chip) { chip.classList.remove('hit'); void chip.offsetWidth; chip.classList.add('hit'); }
   }
 
   function renderHeader() {
-    $('challenge-sub').textContent = V.notes.letter(root()) + ' major · Do to Do';
+    $('challenge-sub').textContent = V.notes.letter(root()) + ' major · ' + level().name;
     $('challenge-key').textContent = V.notes.letter(root()) + ' major';
     $('challenge-key-oct').textContent = 'from ' + V.notes.name(root());
     $('challenge-key-down').disabled = root() <= 36;
@@ -63,30 +67,29 @@
     $('s-challenge').dataset.phase = phase;
     renderHeader();
     renderLadder();
-    if (phase === 'done') $('challenge-result').textContent = 'Done in ' + formatTime(finishedIn);
-    if (phase !== 'playing') meter(null);
+    if (phase === 'done') $('challenge-result').textContent = (newBest ? 'New best! ' : 'Done in ') + formatTime(finishedIn);
+    const best = V.store.get('bests')[V.store.get('challengeLevel')];
+    $('challenge-best').textContent = best ? 'Best ' + formatTime(best) : 'No best time yet';
+    if (phase !== 'playing') game.progress(0);
   }
 
-  function meter(cents, m) {
-    const mark = $('challenge-marker');
-    if (cents === null) { mark.hidden = true; return; }
-    mark.hidden = false;
-    const c = Math.max(-METER_CENTS, Math.min(METER_CENTS, cents));
-    mark.style.top = (50 - c / METER_CENTS * 50) + '%';
-    mark.dataset.state = tuneState(cents, V.store.get('tolerance'));
-    $('challenge-you').textContent = V.notes.name(m);
+  /** Echo level: play the note to sing as its wall slides in. The mic is muted while it sounds. */
+  function echo() {
+    if (phase === 'playing' && level().echo) V.audio.playNote(notes()[step], 0.9);
   }
 
   function stopClock() { if (clock) { clearInterval(clock); clock = null; } }
 
   function start() {
     step = 0; startedAt = Date.now();
-    tracker.reset(); holder.reset();
+    if (level().random && phase === 'done') newCourse();  // a fresh course for each retry
+    tracker.reset(); holder.reset(); game.reset();
     phase = 'playing';
     stopClock();
     clock = setInterval(renderHeader, 250);
     V.app.refreshMic();
     render();
+    echo();
   }
 
   function stop(toPhase) {
@@ -101,30 +104,42 @@
     const reading = tracker.update(hz, clarity);
     const target = notes()[step];
     const h = holder.update(reading ? reading.midi : null, target, V.store.get('tolerance'), V.store.get('hold'));
-    // The meter compares you with the nearest octave of the target, so an octave slip still reads.
-    if (reading) {
-      const off = reading.midi - target;
-      meter((off - 12 * Math.round(off / 12)) * 100, Math.round(reading.midi));
-    } else meter(null);
+    game.push(reading ? reading.midi : null, h.cents === null ? '' : tuneState(h.cents, V.store.get('tolerance')));
+    game.progress(h.progress);
     if (!h.passed) return;
     holder.reset();
+    game.pass();
     step++;
-    if (step >= DEGREES.length) { finishedIn = Date.now() - startedAt; stop('done'); return; }
+    if (step >= notes().length) {
+      finishedIn = Date.now() - startedAt;
+      const bests = V.store.get('bests'), id = V.store.get('challengeLevel');
+      newBest = !bests[id] || finishedIn < bests[id];
+      if (newBest) V.store.set('bests', Object.assign({}, bests, { [id]: finishedIn }));
+      stop('done'); hitChip(step - 1); return;
+    }
     renderLadder();
+    hitChip(step - 1);
+    echo();
   }
 
+  const levelSelect = $('challenge-level');
+  Object.keys(LEVELS).forEach((k) => levelSelect.append(el('option', { value: k, text: LEVELS[k].name })));
+  levelSelect.value = V.store.get('challengeLevel');
+  levelSelect.addEventListener('change', () => V.store.set('challengeLevel', levelSelect.value));
   $('challenge-start').addEventListener('click', start);
   $('challenge-again').addEventListener('click', start);
   $('challenge-stop').addEventListener('click', () => stop('ready'));
   $('challenge-key-down').addEventListener('click', () => V.store.set('challengeRoot', root() - 1));
   $('challenge-key-up').addEventListener('click', () => V.store.set('challengeRoot', root() + 1));
   V.store.onChange((key) => {
-    if (key === 'challengeRoot' || key === 'range' || key === 'names') { if (phase !== 'playing') phase = 'ready'; render(); }
+    if (key === 'challengeLevel') levelSelect.value = V.store.get('challengeLevel');
+    if (key === 'challengeRoot' || key === 'range' || key === 'challengeLevel') course = null;
+    if (key === 'challengeRoot' || key === 'range' || key === 'names' || key === 'challengeLevel') { if (phase !== 'playing') phase = 'ready'; render(); }
   });
 
   V.app.register('challenge', {
-    enter() { unsubscribe = V.audio.onPitch(onFrame); phase = 'ready'; render(); },
-    leave() { if (unsubscribe) unsubscribe(); stopClock(); phase = 'ready'; },
+    enter() { game.start(); unsubscribe = V.audio.onPitch(onFrame); phase = 'ready'; render(); },
+    leave() { if (unsubscribe) unsubscribe(); game.stop(); stopClock(); phase = 'ready'; },
     wantsMic: () => phase === 'playing'
   });
 })(window.V = window.V || {});

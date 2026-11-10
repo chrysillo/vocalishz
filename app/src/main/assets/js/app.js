@@ -24,7 +24,25 @@
     document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === stack[0]));
     if (screens[name].enter) screens[name].enter(params || {});
     V.app.refreshMic();
+    refreshScreenOn();
   }
+
+  // Keeps the display awake in the tuner, or everywhere in the app when the setting says so.
+  function refreshScreenOn() {
+    const on = V.store.get('screenOn') === 'always' || current === 'tuner';
+    if (window.Android && Android.keepScreenOn) Android.keepScreenOn(on);
+  }
+  V.store.onChange((key) => { if (key === 'screenOn') refreshScreenOn(); });
+
+  // Light, dark or the system's choice; theme.css swaps the colour tokens on data-theme.
+  function applyTheme() {
+    const t = V.store.get('theme');
+    if (t === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = t;
+    if (window.Android && Android.setTheme) Android.setTheme(t);
+  }
+  applyTheme();
+  V.store.onChange((key) => { if (key === 'theme') applyTheme(); });
 
   V.app = {
     register(name, screen) { screens[name] = screen; },

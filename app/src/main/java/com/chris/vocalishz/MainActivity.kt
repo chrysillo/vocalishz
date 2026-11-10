@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
@@ -11,7 +12,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.view.View
 import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -33,7 +37,12 @@ class MainActivity : Activity() {
         private const val MIN_TONE_SECONDS = 0.05
         private const val MAX_TONE_SECONDS = 5.0
         private const val TONE_RATE = 44100
+        private const val PREFS = "vocalishz"
+        private const val THEME_KEY = "theme"
+        private val THEMES = setOf("system", "light", "dark")
     }
+
+    private lateinit var root: FrameLayout
 
     private lateinit var web: WebView
     private var detector: PitchDetector? = null
@@ -52,7 +61,6 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // System bar colours come from Theme.Vocalishz; the page follows the same day/night setting via theme.css.
-        val bg = getColor(R.color.theme_bg)
         web = WebView(this)
         web.settings.javaScriptEnabled = true
         web.settings.domStorageEnabled = true
@@ -63,12 +71,11 @@ class MainActivity : Activity() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) =
                 !request.url.toString().startsWith(ASSETS)
         }
-        web.setBackgroundColor(bg)
         web.addJavascriptInterface(Bridge(), "Android")
         web.loadUrl(PAGE)
-        val root = FrameLayout(this)
-        root.setBackgroundColor(bg)
+        root = FrameLayout(this)
         root.addView(web)
+        applyTheme(getSharedPreferences(PREFS, MODE_PRIVATE).getString(THEME_KEY, "system") ?: "system")
         setContentView(root)
         // Android 15+ draws edge-to-edge, so keep the page clear of the status and navigation bars.
         if (Build.VERSION.SDK_INT >= 30) {
@@ -82,6 +89,36 @@ class MainActivity : Activity() {
             backCallback = OnBackInvokedCallback { goBack() }.also {
                 onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, it)
             }
+        }
+    }
+
+    /**
+     * Colours the window and the system bar icons for "light", "dark" or "system". The page swaps its
+     * own colours through data-theme; this keeps the native background and bars in step with it.
+     */
+    private fun applyTheme(theme: String) {
+        val night = when (theme) {
+            "dark" -> true
+            "light" -> false
+            else -> (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        }
+        val bg = getColor(if (night) R.color.canyon_dark_bg else R.color.canyon_light_bg)
+        root.setBackgroundColor(bg)
+        web.setBackgroundColor(bg)
+        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(bg))
+        @Suppress("DEPRECATION")
+        if (Build.VERSION.SDK_INT < 35) { window.statusBarColor = bg; window.navigationBarColor = bg }
+        // Otherwise the system lays a scrim from the (light) window theme over the navigation bar.
+        if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+        if (Build.VERSION.SDK_INT >= 30) {
+            val light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            window.insetsController?.setSystemBarsAppearance(if (night) 0 else light, light)
+        } else {
+            @Suppress("DEPRECATION")
+            val flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or (if (Build.VERSION.SDK_INT >= 27) View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR else 0)
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = if (night) window.decorView.systemUiVisibility and flags.inv()
+                else window.decorView.systemUiVisibility or flags
         }
     }
 
@@ -188,6 +225,17 @@ class MainActivity : Activity() {
         fun startMic() { wantMic = true; runOnUiThread { this@MainActivity.startMic() } }
         @JavascriptInterface
         fun stopMic() { wantMic = false; runOnUiThread { this@MainActivity.stopMic() } }
+        @JavascriptInterface
+        fun setTheme(theme: String) {
+            if (theme !in THEMES) return
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(THEME_KEY, theme).apply()
+            runOnUiThread { if (!isDestroyed) applyTheme(theme) }
+        }
+        @JavascriptInterface
+        fun keepScreenOn(on: Boolean) = runOnUiThread {
+            if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
         @JavascriptInterface
         fun playTone(hz: Double, seconds: Double) {
             // Arguments come from page JS: ignore non-numbers and keep both within what a reference tone needs.

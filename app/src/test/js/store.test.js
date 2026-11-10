@@ -27,3 +27,22 @@ test('set validates, persists and notifies', () => {
   assert.deepStrictEqual(seen, [['a4', 432]]);
   assert.strictEqual(JSON.parse(env.saved()).a4, 432);
 });
+
+test('range history keeps at most ten valid tests', () => {
+  const { V } = load(['store.js']);
+  const r = { low: 43, high: 67, tested: '2026-11-10' };
+  V.store.set('rangeHistory', [r, r]);
+  assert.strictEqual(V.store.get('rangeHistory').length, 2);
+  V.store.set('rangeHistory', Array(11).fill(r));
+  assert.strictEqual(V.store.get('rangeHistory').length, 2);
+  V.store.set('rangeHistory', [{ low: 60, high: 50 }]);
+  assert.strictEqual(V.store.get('rangeHistory').length, 2);
+});
+
+test('best times only for known levels', () => {
+  const { V } = load(['store.js']);
+  V.store.set('bests', { echo: 12000, minor: 30000 });
+  assert.deepStrictEqual({ ...V.store.get('bests') }, { echo: 12000, minor: 30000 });
+  V.store.set('bests', { nope: 1 });
+  assert.deepStrictEqual({ ...V.store.get('bests') }, { echo: 12000, minor: 30000 });
+});

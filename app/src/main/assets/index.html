@@ -65,14 +65,15 @@
       <button class="phase" id="session-listen"><svg class="icon sm" aria-hidden="true"><use href="#i-ear"/></svg>Listen</button>
       <span class="phase" id="session-turn">Your turn</span>
     </div>
-    <div class="ring-host" id="session-ring">
-      <div class="ring-text">
-        <div class="ring-cue" id="session-cue"></div>
-        <div class="ring-note" id="session-note"></div>
-        <div class="ring-aside" id="session-aside"></div>
-      </div>
+    <div class="session-head">
+      <span class="session-cue" id="session-cue"></span>
+      <span class="session-note" id="session-note"></span>
+      <span class="session-aside" id="session-aside"></span>
     </div>
+    <div class="pchart" id="session-chart"><canvas aria-hidden="true"></canvas></div>
     <div class="chips" id="session-chips"></div>
+    <div class="session-tol"><span>Tolerance</span>
+      <div class="seg" data-setting="tolerance"><button data-value="50">Easy</button><button data-value="25">Medium</button><button data-value="10">Strict</button></div></div>
     <div class="actions">
       <button class="btn" id="session-pause">Pause</button>
       <button class="btn" id="session-skip">Skip note</button>
@@ -85,21 +86,29 @@
   </div>
 </section>
 
-<!-- Challenge -->
+<!-- Challenge: Thread the Needle -->
 <section class="screen" id="s-challenge">
   <header class="bar">
-    <div class="grow"><h1 class="h2">Drop the ball</h1><div class="sub" id="challenge-sub"></div></div>
+    <div class="grow"><h1 class="h2">Thread the Needle</h1><div class="sub" id="challenge-sub"></div></div>
     <span class="pill time" id="challenge-time">0:00</span>
     <button class="icon-btn end" data-go="settings" aria-label="Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
   </header>
-  <div class="challenge-body">
-    <div class="meter" aria-hidden="true">
-      <div class="meter-zone"></div>
-      <div class="meter-mark" id="challenge-marker" hidden><span id="challenge-you"></span></div>
-    </div>
-    <div class="ladder" id="challenge-ladder"></div>
+  <div class="session-head">
+    <span class="session-cue" id="challenge-cue"></span>
+    <span class="session-note" id="challenge-note"></span>
+    <span class="session-aside" id="challenge-aside"></span>
   </div>
+  <div class="pchart holes" id="challenge-chart"><canvas aria-hidden="true"></canvas></div>
+  <div class="chips" id="challenge-chips"></div>
   <div class="challenge-foot ready-only">
+    <div class="challenge-pick">
+      <label class="pill select">
+        <span class="sr">Level</span>
+        <select id="challenge-level"></select>
+        <svg class="icon sm" aria-hidden="true"><use href="#i-down"/></svg>
+      </label>
+      <span class="challenge-best" id="challenge-best"></span>
+    </div>
     <div class="stepper">
       <button class="icon-btn" id="challenge-key-down" aria-label="Lower key">−</button>
       <div class="stepper-value"><b id="challenge-key"></b><small id="challenge-key-oct"></small></div>
@@ -126,6 +135,12 @@
   <div class="card voice" id="settings-voice"></div>
   <button class="btn primary block" data-go="range" id="settings-test">Test my range</button>
 
+  <h2 class="eyebrow">Appearance</h2>
+  <div class="card list">
+    <div class="row"><span>Theme</span>
+      <div class="seg" data-setting="theme"><button data-value="system">System</button><button data-value="light">Light</button><button data-value="dark">Dark</button></div></div>
+  </div>
+
   <h2 class="eyebrow">Practice</h2>
   <div class="card list">
     <div class="row"><span>Note names</span>
@@ -146,6 +161,27 @@
       </div></div>
     <div class="row"><span>Tuner view</span>
       <div class="seg" data-setting="tunerView"><button data-value="dial">Dial</button><button data-value="bar">Bar</button></div></div>
+    <div class="row"><span>Keep screen on</span>
+      <div class="seg" data-setting="screenOn"><button data-value="tuner">In tuner</button><button data-value="always">Always</button></div></div>
+  </div>
+</section>
+
+<!-- Range result -->
+<section class="screen" id="s-voice">
+  <header class="bar">
+    <button class="icon-btn start" data-back aria-label="Back"><svg class="icon"><use href="#i-back"/></svg></button>
+    <div class="grow"><h1 class="h2">Your range</h1></div>
+  </header>
+  <div class="result-hero">
+    <div class="eyebrow">You sing like a</div>
+    <div class="result-type" id="voice-type"></div>
+    <div class="result-range" id="voice-range"></div>
+  </div>
+  <div class="card result-chart" id="voice-chart"></div>
+  <div class="card list" id="voice-facts"></div>
+  <div class="actions">
+    <button class="btn" data-go="range">Test again</button>
+    <button class="btn primary" data-back>Done</button>
   </div>
 </section>
 
@@ -181,6 +217,7 @@
 </nav>
 
 <script src="js/notes.js"></script>
+<script src="js/courses.js"></script>
 <script src="js/store.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/audio.js"></script>
@@ -188,7 +225,10 @@
 <script src="js/app.js"></script>
 <script src="js/tuner.js"></script>
 <script src="js/settings.js"></script>
+<script src="js/voice.js"></script>
 <script src="js/range.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/holes.js"></script>
 <script src="js/warmups.js"></script>
 <script src="js/challenge.js"></script>
 </body>

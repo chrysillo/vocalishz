@@ -184,30 +184,6 @@ nav.tabs button.on { color: var(--acc); }
 .range-main .ring-note { font-size: 56px; }
 
 /* ---- challenge ---- */
-.challenge-body { flex: 1; display: flex; gap: 16px; min-height: 0; }
-.meter { position: relative; width: 22px; border-radius: 11px; flex: none;
-  background: linear-gradient(var(--bad), var(--warn) 30%, var(--good) 50%, var(--warn) 70%, var(--bad)); }
-.meter-mark { position: absolute; z-index: 2; left: -4px; width: 30px; height: 26px; margin-top: -13px; border: 2px solid var(--txt); border-radius: 6px;
-  transition: top .08s linear; }
-.meter-mark span { position: absolute; left: 38px; top: 50%; transform: translateY(-50%); padding: 2px 6px; border-radius: 6px;
-  background: var(--surf); font-size: 12px; font-weight: 600; white-space: nowrap; }
-.ladder { position: relative; flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
-.rung { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.rung-label { font-size: 14px; color: var(--muted); }
-.rung-label b { font-weight: 500; }
-.rung-bar { display: flex; width: 100%; height: 10px; gap: 0; transition: gap .3s; }
-.rung-bar i { flex: 1; border-radius: 5px; background: var(--surf2); transition: background .3s; }
-.rung[data-state="current"] .rung-label { color: var(--txt); order: 1; }
-.rung[data-state="current"] .rung-label b { font-size: 32px; font-weight: 800; }
-.rung[data-state="current"] .rung-bar { height: 14px; }
-.rung[data-state="current"] .rung-bar i { background: var(--acc); }
-.rung[data-state="done"] .rung-label { color: var(--good); font-weight: 600; }
-.rung[data-state="done"] .rung-label b::after { content: " ✓"; }
-.rung[data-state="done"] .rung-bar { gap: 68px; }
-.rung[data-state="done"] .rung-bar i { background: color-mix(in srgb, var(--good) 55%, transparent); }
-.ball { position: absolute; left: 50%; top: 0; width: 44px; height: 44px; border-radius: 22px;
-  background: radial-gradient(circle at 35% 35%, var(--ball1), var(--ball2)); transition: transform .45s cubic-bezier(.5, 0, .7, 1.4); }
-#s-challenge:not([data-phase="playing"]) .ball { opacity: .5; }
 .challenge-foot { display: none; flex-direction: column; gap: 12px; align-items: center; }
 #s-challenge[data-phase="ready"] .ready-only,
 #s-challenge[data-phase="playing"] .playing-only,
@@ -229,3 +205,51 @@ nav.tabs button.on { color: var(--acc); }
 .keys .black.in { background: color-mix(in srgb, var(--acc) 60%, var(--bk)); }
 .key-labels { position: relative; height: 16px; margin-top: 4px; }
 .key-labels span { position: absolute; padding-left: 3px; font-size: 11px; color: var(--muted); }
+
+/* ---- range result ---- */
+.result-hero { text-align: center; }
+.result-hero .eyebrow { margin: 0; }
+.result-type { font-size: 44px; font-weight: 800; color: var(--acc); margin-top: 6px; }
+.result-range { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.result-chart { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.vc-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.vc-row > span { width: 92px; flex: none; text-align: right; }
+.vc-row.match > span { color: var(--txt); font-weight: 700; }
+.vc-lane { position: relative; flex: 1; height: 12px; }
+.vc-lane i { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: var(--surf2); }
+.vc-row.match .vc-lane i { background: color-mix(in srgb, var(--acc) 45%, transparent); }
+.vc-rows { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.vc-you { position: absolute; top: -6px; bottom: -6px; border-radius: 6px; pointer-events: none;
+  background: color-mix(in srgb, var(--acc) 14%, transparent); border: 2px solid var(--acc); }
+.vc-axis { position: relative; height: 16px; margin-left: 102px; font-size: 11px; color: var(--muted); }
+.vc-axis span { position: absolute; transform: translateX(-50%); }
+.vc-legend { font-size: 12px; color: var(--muted); display: flex; gap: 14px; justify-content: center; }
+.vc-legend b { display: inline-block; width: 12px; height: 8px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+
+/* ---- warm-up pitch chart: your voice as a scrolling line against the target note ---- */
+.session-head { display: flex; align-items: baseline; justify-content: center; gap: 10px; height: 40px; }
+.session-cue { color: var(--muted); font-size: 15px; }
+.session-note { font-size: 32px; font-weight: 800; line-height: 1; min-width: 60px; text-align: center; }
+.session-aside { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pchart { position: relative; flex: 1; min-height: 240px; border-radius: 16px; background: var(--surf); overflow: hidden; }
+.pchart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#s-session .session-live { gap: 16px; }
+
+/* A hit: the finished chip bounces (the chart flashes its own target bar). */
+.chips span.hit { animation: chip-pop .45s ease-out; }
+@keyframes chip-pop { 0% { transform: scale(1); } 40% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.session-tol { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; color: var(--muted); }
+#s-session .session-live { gap: 20px; }
+.session-tol { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.steps li { padding: 0; }
+.steps .step { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 0; text-align: left; color: inherit; }
+.steps .step .grow { flex: 1; }
+.step-go { color: var(--muted); font-size: 22px; }
+#s-settings > * { flex-shrink: 0; }  /* the page scrolls; keep cards and buttons at full height */
+.challenge-pick { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.challenge-best { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.voice-history { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; font-size: 13px; }
+.voice-history-title { color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.voice-history-row { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 4px 0; font-variant-numeric: tabular-nums; }
+.voice-history-row span:last-child { text-align: right; color: var(--muted); }
+.step-sound { margin-left: 8px; padding: 2px 8px; border-radius: 8px; background: var(--surf2); color: var(--muted); font-size: 12px; font-weight: 600; vertical-align: 2px; }

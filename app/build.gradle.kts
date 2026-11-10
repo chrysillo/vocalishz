@@ -56,8 +56,10 @@ abstract class GenerateThemeTask : DefaultTask() {
 
         write(assetsDir.get().file("theme.css").asFile, buildString {
             appendLine("/* $header */")
-            appendLine(":root {\n  color-scheme: light dark;\n${cssVars(light, "  ")}\n}")
-            appendLine("@media (prefers-color-scheme: dark) {\n  :root {\n${cssVars(dark, "    ")}\n  }\n}")
+            // Follows the system unless the page sets data-theme="light" or "dark" on <html>.
+            appendLine(":root {\n  color-scheme: light;\n${cssVars(light, "  ")}\n}")
+            appendLine("@media (prefers-color-scheme: dark) {\n  :root:not([data-theme=\"light\"]) {\n    color-scheme: dark;\n${cssVars(dark, "    ")}\n  }\n}")
+            appendLine(":root[data-theme=\"dark\"] {\n  color-scheme: dark;\n${cssVars(dark, "  ")}\n}")
         })
 
         val res = resDir.get().asFile

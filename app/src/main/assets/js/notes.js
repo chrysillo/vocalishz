@@ -1,7 +1,8 @@
 // Note maths and naming. Pure functions, no DOM.
 (function (V) {
   const LETTERS = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  const SOLFEGE = ['Do', 'Di', 'Re', 'Ri', 'Mi', 'Fa', 'Fi', 'Sol', 'Si', 'La', 'Li', 'Ti'];
+  // Lowered 3rd, 6th and 7th as Me, Le, Te so the minor scale reads the usual way.
+  const SOLFEGE = ['Do', 'Di', 'Re', 'Me', 'Mi', 'Fa', 'Fi', 'Sol', 'Le', 'La', 'Te', 'Ti'];
   const INTERVALS = ['', 'a minor 2nd', 'a 2nd', 'a minor 3rd', 'a 3rd', 'a 4th', 'a tritone',
     'a 5th', 'a minor 6th', 'a 6th', 'a minor 7th', 'a 7th'];
   // Typical comfortable ranges, low to high voices.
@@ -44,6 +45,9 @@
       });
       return best[0];
     },
+
+    /** Typical voice types as [name, low, high] MIDI notes. */
+    VOICES: VOICES,
 
     MAJOR: [0, 2, 4, 5, 7, 9, 11, 12]
   };

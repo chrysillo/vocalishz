@@ -86,8 +86,11 @@
   $('range-next').addEventListener('click', () => {
     if (best === null) return;
     if (step === 1) { low = best; reset(2); return; }
-    V.store.set('range', { low: low, high: best, tested: V.ui.today() });
+    const result = { low: low, high: best, tested: V.ui.today() };
+    V.store.set('range', result);
+    V.store.set('rangeHistory', [result].concat(V.store.get('rangeHistory')).slice(0, 10));  // newest first
     V.app.back();
+    if (V.app.current() !== 'voice') V.app.push('voice');  // a retest from the result returns to it
   });
 
   V.app.register('range', {

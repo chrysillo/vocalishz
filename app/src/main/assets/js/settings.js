@@ -28,6 +28,18 @@
     return 'tested ' + new Date(date + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   }
 
+  /** Earlier tests, newest first, skipping the one shown above; nothing until there are two. */
+  function history() {
+    const past = V.store.get('rangeHistory').slice(1);
+    if (!past.length) return '';
+    return el('div', { class: 'voice-history' }, [el('div', { class: 'voice-history-title', text: 'Earlier tests' })].concat(
+      past.map((r) => el('div', { class: 'voice-history-row' }, [
+        el('span', { text: testedText(r.tested).replace('tested ', '') }),
+        el('span', { text: V.notes.name(r.low) + ' – ' + V.notes.name(r.high) }),
+        el('span', { text: V.notes.voiceType(r.low, r.high) })
+      ]))));
+  }
+
   function renderVoice() {
     const range = V.store.get('range');
     const card = $('settings-voice');
@@ -44,7 +56,8 @@
         ]),
         el('div', { class: 'voice-range', text: V.notes.name(range.low) + ' – ' + V.notes.name(range.high) })
       ]),
-      keyboard(range.low, range.high)
+      keyboard(range.low, range.high),
+      history()
     );
     $('settings-test').textContent = 'Test my range again';
   }
@@ -59,7 +72,7 @@
   $('settings-a4-down').addEventListener('click', () => V.store.set('a4', V.store.get('a4') - 1));
   $('settings-a4-up').addEventListener('click', () => V.store.set('a4', V.store.get('a4') + 1));
   V.store.onChange((key) => {
-    if (key === 'range') renderVoice();
+    if (key === 'range' || key === 'rangeHistory') renderVoice();
     if (key === 'a4') renderA4();
   });
 
