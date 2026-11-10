@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- sound waves -->
+    <path android:strokeColor="#4FC3C9" android:strokeWidth="2.6" android:strokeLineCap="round"
+        android:pathData="M33,42Q29,49 33,56M27,37Q20,49 27,61M75,42Q79,49 75,56M81,37Q88,49 81,61" />
+    <!-- mic capsule -->
+    <path android:fillColor="#F2F2F0"
+        android:pathData="M54,28a8,8 0 0,1 8,8v14a8,8 0 0,1 -16,0v-14a8,8 0 0,1 8,-8z" />
+    <!-- grille lines -->
+    <path android:strokeColor="#1B2A3A" android:strokeWidth="1.4" android:strokeLineCap="round"
+        android:pathData="M50,37h8M50,41h8M50,45h8" />
+    <!-- yoke, stem and base -->
+    <path android:strokeColor="#F8C35C" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M41,48a13,13 0 0,0 26,0M54,61v10M46,74h16" />
+</vector>
