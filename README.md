@@ -14,46 +14,31 @@ No third-party dependencies, only the Android framework.
 
 | File | Role |
 |---|---|
-| `app/src/main/assets/index.html` | The whole UI (HTML/CSS/JS in a WebView): tabs, tuner display, note maths |
-| `MainActivity.kt` | Hosts the WebView, mic permission, plays reference tones, JS bridge (`Android.*`) |
+| `app/src/main/assets/index.html` | Markup for every screen, an SVG icon sprite, and the script order |
+| `assets/css/app.css` | Layout and components; colours only through theme tokens |
+| `assets/js/notes.js`, `store.js`, `ui.js`, `audio.js`, `pitch.js` | Note maths and naming; validated settings in `localStorage`; DOM helpers and the progress ring; native bridge (mic, pitch events, tones, muting the mic while a tone plays); pitch smoothing (`Tracker`) and "held in tune" timing (`Holder`) |
+| `assets/js/app.js` | Router: tabs reset the history, other screens push on top, `V.app.back()` is called by the Android back button. Also binds every `.seg[data-setting]` control to its setting |
+| `assets/js/tuner.js`, `settings.js`, `range.js`, `warmups.js`, `challenge.js` | One file per screen. Each registers `{ enter, leave, wantsMic }`; the router turns the mic on only while the current screen wants it |
+| `design/theme-canyon.json` | The only place colours are defined (Canyon light and dark). `:app:generateTheme` turns it into `theme.css` (CSS variables, dark via `prefers-color-scheme`) and `colors.xml` (`canyon_light_*`, `canyon_dark_*`, plus day/night `theme_*` aliases) at build time |
+| `res/values{,-night,-v27,-night-v27}/themes.xml` | Day/night app theme: window background and system bars |
+| `MainActivity.kt` | Hosts the WebView, mic permission, plays reference tones, back button, JS bridge (`Android.*`) |
 | `PitchDetector.kt` | Mic capture (`AudioRecord`, 44.1 kHz decimated to 22.05 kHz) and YIN pitch detection |
 
 - Native to JS: `onPitch(hz, clarity, level)` about 43 times a second (`hz` is 0 when silent or unclear), `onMicState('on'|'denied')`.
 - JS to native: `Android.startMic()`, `Android.stopMic()`, `Android.playTone(hz, seconds)`.
-- The mic runs only while the Tuner tab is open and the app is in the foreground.
+- The mic runs only on screens that listen (Tuner, range test, your turn in a warm-up, a running challenge) and only while the app is in the foreground.
 - YIN settings: 2048-sample window, hop 512, threshold 0.15, range 35 to 1600 Hz. Checked against synthetic tones: under 2 cents of error from 41 Hz (bass low E) to 1047 Hz.
-- Settings are stored in `localStorage` under the key `vocalishz`: `{ mode, a4 }`.
+- Settings are stored in `localStorage` under the key `vocalishz`: `{ mode, a4, tunerView, names, hold, tolerance, range, challengeRoot }`.
 - Targets Android 15 (SDK 35, edge-to-edge, so the root view pads for the system bars); min SDK 26.
 
 ## Status
-**v0.1, done:** Tuner tab.
-- Modes: Chromatic, Guitar (E2 A2 D3 G3 B3 E4), Bass (E1 A1 D2 G2), Ukulele (G4 C4 E4 A4).
-- Needle from -50 to +50 cents, green within ±5. Median-of-5 plus smoothing.
-- Instrument modes snap to the nearest string. Tap a string to hear it; mic input is ignored while the tone plays.
-- Adjustable A4 reference (415 to 466 Hz).
-- Not yet tested with a real instrument on the phone.
+**v0.2, done:** Canyon theme (light and dark), and every screen from the designs that the app uses.
+- **Tuner:** instrument dropdown (Chromatic, Guitar, Bass, Ukulele), dial or bar view, string buttons that play their note and get a check mark once tuned.
+- **Settings:** voice type, range and keyboard; range test (lowest, then highest steady note held for 1 s); note names (letters, solfège, both); hold time; pitch tolerance; A4 reference; tuner view.
+- **Warm-ups:** optional guided session: Siren, 5-note scale, Triad arpeggio, Fifth jumps. Each rep is played first, then sung back note by note; a note passes when held in tune. Reps step up a semitone within your range.
+- **Challenge, drop the ball:** sing a major scale Do to Do with no prompts; each rung breaks only when its note is held in tune. Timed, key adjustable. No scores kept.
+- Not yet tested with a real instrument or voice on the phone.
 
-## Roadmap
-**v0.2: Range tab (calibration).**
-- Slide down to your lowest comfortable note and hold it for about 1 s, then your highest.
-- Save the low and high notes, and show a rough voice type (bass, baritone, tenor, alto, mezzo, soprano).
-- Keep a history of tests so range changes show over time. Can be redone any time.
-- First launch should send the user here.
-
-**v0.3: Warm-ups tab.**
-- Every exercise is fitted to the saved range. Start near the bottom, step up a semitone each repetition, stop before the top, then come back down.
-- Exercises:
-  - 5-note scale: 1-2-3-4-5-4-3-2-1
-  - Triad arpeggio: 1-3-5-8-5-3-1
-  - Chromatic: semitones up and down
-  - Fifth jumps: 1-5-1, then 1-5-8-5-1
-  - Siren: slide across the whole range
-- Call and response: the app plays the phrase, then the user sings it back. This avoids the mic hearing the reference tone. A headphones sing-along mode could be added later as an option.
-- Live graph: target notes as bands, the sung pitch as a line on top.
-
-**v0.4: Scoring and progress.**
-- Score each note by the share of time within about ±25 cents.
-- History per exercise.
-- Maybe a custom exercise builder.
-
-**Possible extras:** a light/dark theme like Metronome's, more tunings (drop D, 5-string bass).
+## Ideas
+- Range test history.
+- More tunings (drop D, 5-string bass).

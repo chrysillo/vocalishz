@@ -24,9 +24,8 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val bg = 0xFF121418.toInt()
-        window.statusBarColor = bg
-        window.navigationBarColor = bg
+        // System bar colours come from Theme.Vocalishz; the page follows the same day/night setting via theme.css.
+        val bg = getColor(R.color.theme_bg)
         web = WebView(this)
         web.settings.javaScriptEnabled = true
         web.settings.domStorageEnabled = true
@@ -44,6 +43,15 @@ class MainActivity : Activity() {
                 v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
                 insets
             }
+        }
+    }
+
+    /** Lets the page close its inner screens first; the app closes only when the page has nowhere to go back to. */
+    @Deprecated("Predictive back is not enabled for this app")
+    override fun onBackPressed() {
+        web.evaluateJavascript("window.V && V.app && V.app.back()") { handled ->
+            @Suppress("DEPRECATION")
+            if (handled != "true") super.onBackPressed()
         }
     }
 

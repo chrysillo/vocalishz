@@ -1,0 +1,40 @@
+{
+  "Canyon light": {
+    "bg": "#f5ead9",
+    "surf": "#fffaf2",
+    "surf2": "#eedfc8",
+    "line": "#e6d5bb",
+    "txt": "#3a2414",
+    "muted": "#8a7058",
+    "acc": "#e35d12",
+    "sec": "#775e34",
+    "good": "#2e9e5b",
+    "warn": "#d98e04",
+    "bad": "#d0443a",
+    "ink": "#ffffff",
+    "dim": "#d9c6a8",
+    "bk": "#502b11",
+    "wk": "#fffaf2",
+    "ball1": "#ebb472",
+    "ball2": "#e35d12"
+  },
+  "Canyon dark": {
+    "bg": "#1f140c",
+    "surf": "#2c1e14",
+    "surf2": "#3a281b",
+    "line": "#44301f",
+    "txt": "#f8eddd",
+    "muted": "#b39a7e",
+    "acc": "#f0732a",
+    "sec": "#a89058",
+    "good": "#4cc47a",
+    "warn": "#f2b03d",
+    "bad": "#ef6a5a",
+    "ink": "#1f140c",
+    "dim": "#5a4130",
+    "bk": "#1f140c",
+    "wk": "#f5ead9",
+    "ball1": "#ebb472",
+    "ball2": "#f0732a"
+  }
+}

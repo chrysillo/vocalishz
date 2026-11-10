@@ -3,249 +3,193 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Vocalishz</title>
-<style>
-  :root { --bg:#121418; --fg:#f2f2f0; --muted:#8b909a; --card:#1e2127; --line:#343841;
-    --accent:#4fc3c9; --good:#5ad17e; --warn:#ffb547; --bad:#ff6b6b; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; touch-action:manipulation; user-select:none; }
-  body { display:flex; flex-direction:column; }
-  .view { flex:1; display:none; flex-direction:column; padding:20px 20px 12px; gap:22px; max-width:480px; width:100%; margin:0 auto; overflow-y:auto; }
-  .view.on { display:flex; }
-  h1 { margin:0; font-size:22px; }
-
-  /* tabs */
-  nav { display:flex; border-top:1px solid var(--line); background:var(--bg); }
-  nav button { flex:1; height:64px; border:0; background:none; color:var(--muted); font:inherit; font-size:12px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
-  nav button svg { width:24px; height:24px; }
-  nav button.on { color:var(--accent); }
-
-  /* tuner */
-  .chips { display:flex; gap:8px; }
-  .chips button { flex:1; height:42px; border-radius:21px; border:0; background:var(--card); color:var(--fg); font:inherit; font-size:14px; }
-  .chips button.on { background:var(--accent); color:#0b2426; font-weight:600; }
-  .readout { text-align:center; margin-top:8px; }
-  .note { font-size:110px; font-weight:700; line-height:1; transition:color .15s; }
-  .note sup { font-size:36px; font-weight:600; color:var(--muted); vertical-align:top; margin-left:4px; position:relative; top:14px; }
-  .note.idle { color:var(--line); }
-  .note.good { color:var(--good); }
-  .sub { color:var(--muted); font-size:15px; margin-top:8px; font-variant-numeric:tabular-nums; min-height:20px; }
-  .meter { position:relative; height:84px; }
-  .scale { position:absolute; inset:24px 0 24px; border-radius:12px; background:var(--card); overflow:hidden; }
-  .zone { position:absolute; top:0; bottom:0; left:45%; width:10%; background:rgba(90,209,126,.18); }
-  .tick { position:absolute; top:8px; bottom:8px; width:2px; background:var(--line); transform:translateX(-1px); }
-  .tick.mid { background:var(--muted); top:0; bottom:0; }
-  .needle { position:absolute; top:12px; bottom:12px; left:50%; width:6px; margin-left:-3px; border-radius:3px;
-    background:var(--muted); transition:left .08s linear, background .15s, opacity .3s; opacity:0; }
-  .meter-labels { position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; color:var(--muted); font-size:12px; }
-  .flat-sharp { position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; color:var(--muted); font-size:13px; }
-  .strings { display:flex; gap:8px; justify-content:center; min-height:58px; }
-  .strings button { flex:1; max-width:64px; height:58px; border-radius:14px; border:2px solid transparent; background:var(--card);
-    color:var(--fg); font:inherit; font-size:18px; font-weight:600; }
-  .strings button small { display:block; font-size:11px; color:var(--muted); font-weight:400; }
-  .strings button.near { border-color:var(--accent); }
-  .strings button.good { border-color:var(--good); background:rgba(90,209,126,.15); }
-  .hint { text-align:center; color:var(--muted); font-size:13px; margin-top:-8px; }
-  .ref { display:flex; align-items:center; justify-content:center; gap:14px; color:var(--muted); font-size:15px; margin-top:auto; }
-  .ref button { width:44px; height:44px; border-radius:12px; border:0; background:var(--card); color:var(--fg); font-size:22px; }
-  .ref output { min-width:110px; text-align:center; color:var(--fg); font-variant-numeric:tabular-nums; }
-  .msg { text-align:center; color:var(--warn); font-size:14px; min-height:18px; }
-
-  .soon { margin:auto 0; text-align:center; color:var(--muted); line-height:1.5; }
-  .soon h2 { color:var(--fg); margin:0 0 8px; }
-</style>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="css/app.css">
 </head>
 <body>
 
-<section class="view on" id="v-tuner">
-  <div class="chips" id="modes">
-    <button data-m="chromatic" class="on">Chromatic</button>
-    <button data-m="guitar">Guitar</button>
-    <button data-m="bass">Bass</button>
-    <button data-m="ukulele">Ukulele</button>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-tuner" viewBox="0 0 24 24"><path d="M4 18a10 10 0 0 1 16 0"/><path d="M12 18l4-7"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 4h11l-2 4 2 4H6"/></symbol>
+  <symbol id="i-ear" viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 3-2 4-3 5.5S14 18 12 19.5 8 20 8 17"/><path d="M10 9a2 2 0 1 1 4 0"/></symbol>
+</svg>
+
+<p class="mic-msg" id="mic-msg" hidden>Microphone access is off. Allow it in Settings &gt; Apps &gt; Vocalishz.</p>
+
+<!-- Tuner -->
+<section class="screen" id="s-tuner">
+  <header class="bar">
+    <h1 class="grow">Tuner</h1>
+    <label class="pill select">
+      <span class="sr">Instrument</span>
+      <select id="tuner-mode"></select>
+      <svg class="icon sm" aria-hidden="true"><use href="#i-down"/></svg>
+    </label>
+    <button class="icon-btn end" data-go="settings" aria-label="Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
+  </header>
+  <div class="seg end-self" data-setting="tunerView">
+    <button data-value="dial">Dial</button><button data-value="bar">Bar</button>
   </div>
-
-  <div class="readout">
-    <div class="note idle" id="note">–</div>
-    <div class="sub" id="sub">Play or sing a note</div>
+  <div class="gauge" id="tuner-gauge"></div>
+  <div class="readout" id="tuner-readout">
+    <span class="note-big" id="tuner-note">–</span><sup id="tuner-oct"></sup>
+    <div class="readout-sub" id="tuner-sub">&nbsp;</div>
   </div>
+  <div class="strings" id="tuner-strings"></div>
+</section>
 
-  <div class="meter">
-    <div class="flat-sharp"><span>♭ flat</span><span>sharp ♯</span></div>
-    <div class="scale" id="scale"><div class="zone"></div></div>
-    <div class="needle" id="needle"></div>
-    <div class="meter-labels"><span>−50</span><span>0</span><span>+50</span></div>
+<!-- Warm-ups -->
+<section class="screen" id="s-warmups">
+  <header class="bar">
+    <div class="grow"><h1>Warm-ups</h1><div class="sub" id="warmups-sub"></div></div>
+    <button class="icon-btn end" data-go="settings" aria-label="Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
+  </header>
+  <div class="stack" id="warmups-body"></div>
+</section>
+
+<!-- Warm-up session -->
+<section class="screen" id="s-session">
+  <header class="bar">
+    <button class="icon-btn start" data-back aria-label="Back"><svg class="icon"><use href="#i-back"/></svg></button>
+    <div class="grow"><h1 class="h2" id="session-title"></h1><div class="sub" id="session-sub"></div></div>
+  </header>
+  <div class="session-live">
+    <div class="phases">
+      <button class="phase" id="session-listen"><svg class="icon sm" aria-hidden="true"><use href="#i-ear"/></svg>Listen</button>
+      <span class="phase" id="session-turn">Your turn</span>
+    </div>
+    <div class="ring-host" id="session-ring">
+      <div class="ring-text">
+        <div class="ring-cue" id="session-cue"></div>
+        <div class="ring-note" id="session-note"></div>
+        <div class="ring-aside" id="session-aside"></div>
+      </div>
+    </div>
+    <div class="chips" id="session-chips"></div>
+    <div class="actions">
+      <button class="btn" id="session-pause">Pause</button>
+      <button class="btn" id="session-skip">Skip note</button>
+    </div>
   </div>
-
-  <div class="strings" id="strings"></div>
-  <div class="hint" id="hint"></div>
-  <div class="msg" id="msg"></div>
-
-  <div class="ref">
-    <button id="refDown" aria-label="Lower reference">−</button>
-    <output id="refOut">A4 = 440 Hz</output>
-    <button id="refUp" aria-label="Raise reference">+</button>
+  <div class="session-done">
+    <div class="done-mark"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></div>
+    <h2>Warm-up done</h2>
+    <button class="btn primary block" data-back>Back to warm-ups</button>
   </div>
 </section>
 
-<section class="view" id="v-warmup">
-  <div class="soon"><h2>Warm-ups</h2>Scales, arpeggios, chromatics and fifth jumps,<br>built around your range. Coming next.</div>
+<!-- Challenge -->
+<section class="screen" id="s-challenge">
+  <header class="bar">
+    <div class="grow"><h1 class="h2">Drop the ball</h1><div class="sub" id="challenge-sub"></div></div>
+    <span class="pill time" id="challenge-time">0:00</span>
+    <button class="icon-btn end" data-go="settings" aria-label="Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
+  </header>
+  <div class="challenge-body">
+    <div class="meter" aria-hidden="true">
+      <div class="meter-zone"></div>
+      <div class="meter-mark" id="challenge-marker" hidden><span id="challenge-you"></span></div>
+    </div>
+    <div class="ladder" id="challenge-ladder"></div>
+  </div>
+  <div class="challenge-foot ready-only">
+    <div class="stepper">
+      <button class="icon-btn" id="challenge-key-down" aria-label="Lower key">−</button>
+      <div class="stepper-value"><b id="challenge-key"></b><small id="challenge-key-oct"></small></div>
+      <button class="icon-btn" id="challenge-key-up" aria-label="Raise key">+</button>
+    </div>
+    <button class="btn primary block" id="challenge-start">Start</button>
+  </div>
+  <div class="challenge-foot playing-only">
+    <button class="btn block" id="challenge-stop">Stop</button>
+  </div>
+  <div class="challenge-foot done-only">
+    <div class="result" id="challenge-result"></div>
+    <button class="btn primary block" id="challenge-again">Again</button>
+  </div>
 </section>
 
-<section class="view" id="v-range">
-  <div class="soon"><h2>Your range</h2>Sing your lowest and highest notes<br>to set up your warm-ups. Coming next.</div>
+<!-- Settings -->
+<section class="screen" id="s-settings">
+  <header class="bar">
+    <button class="icon-btn start" data-back aria-label="Back"><svg class="icon"><use href="#i-back"/></svg></button>
+    <h1 class="grow">Settings</h1>
+  </header>
+  <h2 class="eyebrow">Your voice</h2>
+  <div class="card voice" id="settings-voice"></div>
+  <button class="btn primary block" data-go="range" id="settings-test">Test my range</button>
+
+  <h2 class="eyebrow">Practice</h2>
+  <div class="card list">
+    <div class="row"><span>Note names</span>
+      <div class="seg" data-setting="names"><button data-value="letters">C D E</button><button data-value="solfege">Do Re Mi</button><button data-value="both">Both</button></div></div>
+    <div class="row"><span>Pass when held for</span>
+      <div class="seg" data-setting="hold"><button data-value="0.3">0.3s</button><button data-value="0.6">0.6s</button><button data-value="1">1s</button></div></div>
+    <div class="row"><span>Pitch tolerance<small>cents</small></span>
+      <div class="seg" data-setting="tolerance"><button data-value="50">±50</button><button data-value="25">±25</button><button data-value="10">±10</button></div></div>
+  </div>
+
+  <h2 class="eyebrow">Tuner</h2>
+  <div class="card list">
+    <div class="row"><span>Reference A4</span>
+      <div class="stepper small">
+        <button class="icon-btn" id="settings-a4-down" aria-label="Lower reference">−</button>
+        <output class="stepper-value" id="settings-a4"></output>
+        <button class="icon-btn" id="settings-a4-up" aria-label="Raise reference">+</button>
+      </div></div>
+    <div class="row"><span>Tuner view</span>
+      <div class="seg" data-setting="tunerView"><button data-value="dial">Dial</button><button data-value="bar">Bar</button></div></div>
+  </div>
 </section>
 
-<nav id="tabs">
-  <button data-v="tuner" class="on">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18a10 10 0 0 1 16 0"/><path d="M12 18l4-7"/><circle cx="12" cy="18" r="1.5" fill="currentColor"/></svg>
-    Tuner</button>
-  <button data-v="warmup">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-    Warm-ups</button>
-  <button data-v="range">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
-    Range</button>
+<!-- Range test -->
+<section class="screen" id="s-range">
+  <header class="bar">
+    <button class="icon-btn start" data-back aria-label="Back"><svg class="icon"><use href="#i-back"/></svg></button>
+    <div class="grow"><h1 class="h2">Range test</h1><div class="sub" id="range-sub"></div></div>
+  </header>
+  <div class="progress-steps" id="range-steps" data-step="1"><i></i><i></i></div>
+  <div class="range-body">
+    <div class="note-ladder" id="range-ladder" aria-hidden="true"></div>
+    <div class="range-main">
+      <div class="ring-host" id="range-ring">
+        <div class="ring-text">
+          <div class="ring-note" id="range-note">–</div>
+          <div class="ring-aside" id="range-hint"></div>
+        </div>
+      </div>
+      <div class="tag" id="range-best" hidden></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="range-restart">Restart</button>
+    <button class="btn primary" id="range-next" disabled></button>
+  </div>
+</section>
+
+<nav class="tabs">
+  <button data-tab="tuner"><svg class="icon" aria-hidden="true"><use href="#i-tuner"/></svg>Tuner</button>
+  <button data-tab="warmups"><svg class="icon" aria-hidden="true"><use href="#i-music"/></svg>Warm-ups</button>
+  <button data-tab="challenge"><svg class="icon" aria-hidden="true"><use href="#i-flag"/></svg>Challenge</button>
 </nav>
 
-<script>
-(function () {
-  var NATIVE = !!window.Android;
-  var $ = function (id) { return document.getElementById(id); };
-  var NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
-  var INSTRUMENTS = {
-    guitar: [40, 45, 50, 55, 59, 64],   // E2 A2 D3 G3 B3 E4
-    bass: [28, 33, 38, 43],             // E1 A1 D2 G2
-    ukulele: [67, 60, 64, 69]           // G4 C4 E4 A4 (re-entrant)
-  };
-  var IN_TUNE = 5; // cents
-
-  var st = { mode: 'chromatic', a4: 440 };
-  try { var s = JSON.parse(localStorage.getItem('vocalishz') || '{}');
-    if (s.mode === 'chromatic' || INSTRUMENTS[s.mode]) st.mode = s.mode;
-    if (s.a4 >= 415 && s.a4 <= 466) st.a4 = s.a4; } catch (e) {}
-  function save() { try { localStorage.setItem('vocalishz', JSON.stringify(st)); } catch (e) {} }
-
-  function midiToHz(m) { return st.a4 * Math.pow(2, (m - 69) / 12); }
-  function hzToMidi(hz) { return 69 + 12 * Math.log2(hz / st.a4); }
-  function label(m) { return NAMES[((m % 12) + 12) % 12]; }
-  function octave(m) { return Math.floor(m / 12) - 1; }
-
-  // ---- tabs ----
-  var view = 'tuner';
-  $('tabs').onclick = function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    view = b.dataset.v;
-    [].forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); });
-    ['tuner', 'warmup', 'range'].forEach(function (v) { $('v-' + v).classList.toggle('on', v === view); });
-    micForView();
-  };
-  function micForView() {
-    if (!NATIVE) return;
-    if (view === 'tuner') Android.startMic(); else Android.stopMic();
-  }
-
-  // ---- meter ticks ----
-  for (var c = -50; c <= 50; c += 10) {
-    var t = document.createElement('div');
-    t.className = 'tick' + (c === 0 ? ' mid' : '');
-    t.style.left = (50 + c) + '%';
-    $('scale').appendChild(t);
-  }
-
-  // ---- modes and strings ----
-  function renderModes() {
-    [].forEach.call($('modes').children, function (b) { b.classList.toggle('on', b.dataset.m === st.mode); });
-    var box = $('strings'); box.innerHTML = '';
-    var list = INSTRUMENTS[st.mode];
-    $('hint').textContent = list ? 'Tap a string to hear its note' : '';
-    if (!list) return;
-    list.forEach(function (m, i) {
-      var b = document.createElement('button');
-      b.dataset.midi = m;
-      b.innerHTML = label(m) + '<small>' + label(m) + octave(m) + '</small>';
-      b.onclick = function () { playRef(m); };
-      box.appendChild(b);
-    });
-  }
-  $('modes').onclick = function (e) {
-    var b = e.target.closest('button'); if (!b) return;
-    st.mode = b.dataset.m; save(); renderModes(); reset();
-  };
-
-  // ---- reference pitch ----
-  function renderRef() { $('refOut').textContent = 'A4 = ' + st.a4 + ' Hz'; }
-  $('refDown').onclick = function () { if (st.a4 > 415) { st.a4--; save(); renderRef(); } };
-  $('refUp').onclick = function () { if (st.a4 < 466) { st.a4++; save(); renderRef(); } };
-
-  // ---- reference tones (mic input is ignored while one plays) ----
-  var muteUntil = 0;
-  function playRef(m) {
-    if (!NATIVE) return;
-    Android.playTone(midiToHz(m), 1.6);
-    muteUntil = Date.now() + 1800;
-  }
-
-  // ---- pitch handling ----
-  var recent = [], smooth = null, lastSeen = 0;
-  function median(a) { var b = a.slice().sort(function (x, y) { return x - y; }); return b[b.length >> 1]; }
-
-  function reset() {
-    recent = []; smooth = null;
-    $('note').className = 'note idle'; $('note').textContent = '–';
-    $('sub').textContent = 'Play or sing a note';
-    $('needle').style.opacity = 0;
-    [].forEach.call($('strings').children, function (b) { b.className = ''; });
-  }
-
-  window.onPitch = function (hz, clarity) {
-    if (Date.now() < muteUntil) return;
-    if (!hz || clarity < 0.85) {
-      if (lastSeen && Date.now() - lastSeen > 900) { lastSeen = 0; reset(); }
-      return;
-    }
-    lastSeen = Date.now();
-    recent.push(hz); if (recent.length > 5) recent.shift();
-    var f = median(recent);
-
-    var target, list = INSTRUMENTS[st.mode], midi = hzToMidi(f);
-    if (list) {
-      target = list.reduce(function (best, m) { return Math.abs(m - midi) < Math.abs(best - midi) ? m : best; }, list[0]);
-    } else {
-      target = Math.round(midi);
-    }
-    var cents = (midi - target) * 100;
-    smooth = smooth === null ? cents : smooth + (cents - smooth) * 0.35;
-    show(target, smooth, f);
-  };
-
-  function show(m, cents, hz) {
-    var good = Math.abs(cents) <= IN_TUNE;
-    var note = $('note');
-    note.className = 'note' + (good ? ' good' : '');
-    note.innerHTML = label(m) + '<sup>' + octave(m) + '</sup>';
-    var r = Math.round(cents);
-    $('sub').textContent = (good ? 'In tune' : (r > 0 ? '+' + r : r) + ' cents' + (r > 0 ? ' · tune down' : ' · tune up')) +
-      '  ·  ' + hz.toFixed(1) + ' Hz';
-    var n = $('needle');
-    n.style.opacity = 1;
-    n.style.left = (50 + Math.max(-50, Math.min(50, cents))) + '%';
-    n.style.background = good ? 'var(--good)' : Math.abs(cents) <= 20 ? 'var(--warn)' : 'var(--bad)';
-    [].forEach.call($('strings').children, function (b) {
-      b.className = +b.dataset.midi === m ? (good ? 'good' : 'near') : '';
-    });
-  }
-
-  window.onMicState = function (state) {
-    $('msg').textContent = state === 'denied' ? 'Microphone access is off. Allow it in Settings > Apps > Vocalishz.' : '';
-  };
-
-  renderModes(); renderRef();
-  if (!NATIVE) $('msg').textContent = 'Open in the Android app to use the microphone.';
-  micForView();
-})();
-</script>
+<script src="js/notes.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/pitch.js"></script>
+<script src="js/app.js"></script>
+<script src="js/tuner.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/range.js"></script>
+<script src="js/warmups.js"></script>
+<script src="js/challenge.js"></script>
 </body>
 </html>
