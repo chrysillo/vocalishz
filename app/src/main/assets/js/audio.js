@@ -16,6 +16,8 @@
 
   window.onMicState = function (state) {
     micState = state;
+    // A denial leaves the mic off, so the next setMic(true) asks again.
+    if (state === 'denied') micOn = false;
     micListeners.forEach((fn) => fn(state));
   };
 

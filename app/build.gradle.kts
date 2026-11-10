@@ -4,20 +4,29 @@ plugins {
 }
 android {
     namespace = "com.chris.vocalishz"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.chris.vocalishz"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            // The default file keeps @JavascriptInterface methods, which the page calls by name.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }
 
 /**
@@ -77,3 +86,20 @@ androidComponents {
         variant.sources.res?.addGeneratedSourceDirectory(generateTheme, GenerateThemeTask::resDir)
     }
 }
+
+/** Runs the pure page scripts' tests (app/src/test/js) with Node's built-in runner, when Node is installed. */
+val jsTest = tasks.register("jsTest") {
+    val dir = layout.projectDirectory.dir("src/test/js")
+    inputs.dir(dir)
+    inputs.dir(layout.projectDirectory.dir("src/main/assets/js"))
+    doLast {
+        val files = dir.asFile.listFiles { f -> f.name.endsWith(".test.js") }.orEmpty().sorted().map { it.path }
+        val node = try {
+            ProcessBuilder("node", "--version").start().waitFor() == 0
+        } catch (e: java.io.IOException) { false }
+        if (!node) { logger.warn("jsTest: node not found, skipping the JS tests"); return@doLast }
+        val p = ProcessBuilder(listOf("node", "--test") + files).inheritIO().start()
+        if (p.waitFor() != 0) throw GradleException("JS tests failed")
+    }
+}
+tasks.matching { it.name == "test" }.configureEach { dependsOn(jsTest) }

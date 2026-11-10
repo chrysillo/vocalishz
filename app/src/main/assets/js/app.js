@@ -76,6 +76,8 @@
   V.audio.onMicState((state) => {
     $('mic-msg').hidden = state !== 'denied';
   });
+  // Tapping the notice asks for the microphone again (Android shows its own prompt or nothing if blocked).
+  $('mic-msg').addEventListener('click', () => { if (V.audio.native) V.app.refreshMic(); });
 
   // Screens register themselves in the scripts after this one; start once they all have.
   document.addEventListener('DOMContentLoaded', () => {
