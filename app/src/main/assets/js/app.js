@@ -90,6 +90,22 @@
   });
   V.store.onChange(renderSegs);
 
+  // ---- sliders bound to a setting: <input type="range" data-setting="KEY">, with an optional
+  // <output data-setting-value="KEY"> showing ±value ----
+  function renderSliders() {
+    document.querySelectorAll('input[type=range][data-setting]').forEach((r) => {
+      const v = V.store.get(r.dataset.setting);
+      if (document.activeElement !== r) r.value = v;
+      r.style.setProperty('--fill', ((v - r.min) / (r.max - r.min) * 100) + '%');
+    });
+    document.querySelectorAll('[data-setting-value]').forEach((o) => { o.textContent = '±' + V.store.get(o.dataset.settingValue) + '¢'; });
+  }
+  document.addEventListener('input', (e) => {
+    const r = e.target;
+    if (r.matches && r.matches('input[type=range][data-setting]')) V.store.set(r.dataset.setting, Number(r.value));
+  });
+  V.store.onChange(renderSliders);
+
   // ---- microphone notice ----
   V.audio.onMicState((state) => {
     $('mic-msg').hidden = state !== 'denied';
@@ -100,6 +116,7 @@
   // Screens register themselves in the scripts after this one; start once they all have.
   document.addEventListener('DOMContentLoaded', () => {
     renderSegs();
+    renderSliders();
     if (!V.audio.native) {
       $('mic-msg').textContent = 'Open in the Android app to use the microphone.';
       $('mic-msg').hidden = false;

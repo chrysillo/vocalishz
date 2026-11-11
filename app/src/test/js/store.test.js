@@ -55,3 +55,12 @@ test('warm-up note timer defaults to 8 seconds and only takes the offered choice
   V.store.set('noteTime', 7);
   assert.strictEqual(V.store.get('noteTime'), 0);
 });
+
+test('tolerance takes any 5-cent step from 5 to 50', () => {
+  const { V } = load(['store.js'], { saved: JSON.stringify({ tolerance: 10 }) });
+  assert.strictEqual(V.store.get('tolerance'), 10);
+  V.store.set('tolerance', 35);
+  assert.strictEqual(V.store.get('tolerance'), 35);
+  [0, 55, 33, '20'].forEach((v) => V.store.set('tolerance', v));
+  assert.strictEqual(V.store.get('tolerance'), 35);
+});

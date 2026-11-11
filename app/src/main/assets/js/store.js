@@ -6,7 +6,6 @@
     tunerView: ['dial', 'bar'],
     names: ['letters', 'solfege', 'both'],
     hold: [0.3, 0.6, 1],
-    tolerance: [50, 25, 10],
     noteTime: [0, 5, 8, 12],   // seconds to hit each warm-up note before the rep starts over; 0 is off
     screenOn: ['tuner', 'always'],
     theme: ['system', 'light', 'dark'],
@@ -21,6 +20,7 @@
   function valid(key, v) {
     if (CHOICES[key]) return CHOICES[key].indexOf(v) >= 0;
     switch (key) {
+      case 'tolerance': return Number.isInteger(v) && v >= 5 && v <= 50 && v % 5 === 0;   // cents either side, set by a slider
       case 'a4': return Number.isInteger(v) && v >= 415 && v <= 466;
       case 'range': return v === null || (v && Number.isInteger(v.low) && Number.isInteger(v.high) &&
         v.low >= 24 && v.high <= 96 && v.low < v.high);

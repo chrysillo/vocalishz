@@ -267,3 +267,15 @@ nav.tabs button.on { color: var(--acc); }
 /* A tapped note: its chip pulses while it plays. */
 .chips > *.play { animation: chip-play 1s ease-out; box-shadow: 0 0 0 2px var(--acc); }
 @keyframes chip-play { 0% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+/* Tolerance slider: a target icon, the slider (left tight, right loose) and the value in cents. */
+.tol { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.tol input { -webkit-appearance: none; appearance: none; width: 160px; height: 28px; background: none; margin: 0; }
+.tol input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--acc) var(--fill, 50%), var(--surf2) var(--fill, 50%)); }
+.tol input::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 11px;
+  background: var(--acc); border: 3px solid var(--surf); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.tol-val { min-width: 42px; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+.row .tol input { width: 120px; }
+.tol input:focus:not(:focus-visible) { outline: none; }
+.tol .icon { width: 20px; height: 20px; }

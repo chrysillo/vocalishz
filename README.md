@@ -38,8 +38,8 @@ No third-party dependencies, only the Android framework (JUnit for unit tests; t
 ## Status
 **v0.4.** See [docs/ROADMAP.md](docs/ROADMAP.md) for what each screen does, the research behind the warm-ups and the challenge, and what comes next.
 - **Tuner:** instrument dropdown (Chromatic; Guitar standard, Drop D, DADGAD; Bass 4- and 5-string; Ukulele), dial or bar view; reads the nearest note in every mode; string buttons play their note and get a check mark once tuned; screen stays on.
-- **Settings:** voice type, range and keyboard; range test with a result screen and history; note names; hold time; pitch tolerance; A4 reference; tuner view; keep screen on; theme (System, Light, Dark).
-- **Warm-ups:** six stages from the middle of the range outwards, each startable on its own, each with the sound to sing it on (hum, lip trill, "ah"), with a scrolling pitch chart. A restart button takes the warm-up back to its first rep, and a per-note timer (Off, 5, 8 or 12 s; default 8) sends the rep back to its first note when time runs out. Tap any note chip to hear that note on its own.
+- **Settings:** voice type, range and keyboard; range test with a result screen and history; note names; hold time; pitch tolerance (slider, ±5 to ±50 cents); time per note for warm-ups; A4 reference; tuner view; keep screen on; theme (System, Light, Dark).
+- **Warm-ups:** six stages from the middle of the range outwards, each startable on its own, each with the sound to sing it on (hum, lip trill, "ah"), with a scrolling pitch chart. A restart button takes the warm-up back to its first rep, and a per-note timer (Off, 5, 8 or 12 s in Settings; default 8) sends the rep back to its first note when time runs out. Tap any note chip to hear that note on its own.
 - **Challenge, Thread the Needle:** eight levels from Echo (match by ear) to Random intervals, best time per level.
 - Not yet tested with a real instrument or voice on the phone.
 
