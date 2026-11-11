@@ -46,3 +46,12 @@ test('best times only for known levels', () => {
   V.store.set('bests', { nope: 1 });
   assert.deepStrictEqual({ ...V.store.get('bests') }, { echo: 12000, minor: 30000 });
 });
+
+test('warm-up note timer defaults to 8 seconds and only takes the offered choices', () => {
+  const { V } = load(['store.js']);
+  assert.strictEqual(V.store.get('noteTime'), 8);
+  V.store.set('noteTime', 0);
+  assert.strictEqual(V.store.get('noteTime'), 0);
+  V.store.set('noteTime', 7);
+  assert.strictEqual(V.store.get('noteTime'), 0);
+});

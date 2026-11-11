@@ -253,3 +253,14 @@ nav.tabs button.on { color: var(--acc); }
 .voice-history-row { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 4px 0; font-variant-numeric: tabular-nums; }
 .voice-history-row span:last-child { text-align: right; color: var(--muted); }
 .step-sound { margin-left: 8px; padding: 2px 8px; border-radius: 8px; background: var(--surf2); color: var(--muted); font-size: 12px; font-weight: 600; vertical-align: 2px; }
+
+/* Warm-up note timer: a bar that empties while you look for the note; when it runs out the rep starts over. */
+.note-timer { height: 6px; border-radius: 3px; background: var(--surf2); overflow: hidden; flex: none; }
+.note-timer i { display: block; height: 100%; width: 100%; border-radius: 3px; background: var(--muted); transform-origin: left; }
+.note-timer[data-state="warn"] i { background: var(--warn); }
+.note-timer[data-state="bad"] i { background: var(--bad); }
+#s-session:not([data-phase="turn"]) .note-timer i { opacity: .5; }
+/* Time ran out: the chips shake and flash before the rep plays again. */
+.chips.miss { animation: chips-shake .4s ease-out; }
+.chips.miss span { background: color-mix(in srgb, var(--bad) 22%, transparent); color: var(--bad); }
+@keyframes chips-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }

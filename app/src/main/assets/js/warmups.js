@@ -20,6 +20,7 @@
   const STEP_MS = 600;   // note spacing when the app plays a rep
   const SLIDE_TOLERANCE = 50;
   const SLIDE_HOLD = 0.3;
+  const MISS_MS = 700;   // how long the miss shows before the rep plays again
 
   /** The reps of a stage for a range: [{ root, notes }], kept inside the range. */
   function plan(stage, range) {
@@ -80,6 +81,52 @@
   let phase = 'listen';    // listen | turn | paused | done
   let pausedFrom = null, cancelPlayback = null, unsubscribe = null;
 
+  // Note timer: you get the "Time per note" setting to hit each note. It only runs on your turn
+  // (listening and pausing freeze it) and starts again for every note. Run out and the rep starts
+  // over from the first note, so the whole sequence has to be sung again.
+  const timer = { used: 0, from: null, raf: 0, miss: 0 };
+  const timeLimit = () => V.store.get('noteTime') * 1000;
+  const timeUsed = () => timer.used + (timer.from === null ? 0 : performance.now() - timer.from);
+  function timerStop() {
+    if (timer.from !== null) { timer.used += performance.now() - timer.from; timer.from = null; }
+    if (timer.raf) { cancelAnimationFrame(timer.raf); timer.raf = 0; }
+  }
+  function timerReset() { timer.used = 0; if (timer.from !== null) timer.from = performance.now(); drawTimer(); }
+  function timerStart() {
+    if (timer.from === null) timer.from = performance.now();
+    if (!timer.raf) timer.raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    timer.raf = 0;
+    if (phase !== 'turn') return;
+    drawTimer();
+    if (timeLimit() && timeUsed() >= timeLimit()) timeUp();
+    else timer.raf = requestAnimationFrame(tick);
+  }
+  function drawTimer() {
+    const bar = $('session-timer'), limit = timeLimit();
+    bar.hidden = !limit;
+    if (!limit) return;
+    const left = Math.max(0, 1 - timeUsed() / limit);
+    bar.firstChild.style.transform = 'scaleX(' + left + ')';
+    bar.dataset.state = left < 0.2 ? 'bad' : left < 0.45 ? 'warn' : '';
+  }
+  V.store.onChange((key) => { if (key === 'noteTime') { timerReset(); if (phase === 'turn') timerStart(); } });
+
+  /** Out of time: shake the chips, then play the rep again from its first note. */
+  function timeUp() {
+    timerStop();
+    stopPlayback();
+    setPhase('missed');
+    const chips = $('session-chips');
+    chips.classList.remove('miss'); void chips.offsetWidth; chips.classList.add('miss');
+    timer.miss = setTimeout(() => { timer.miss = 0; chips.classList.remove('miss'); startRep(); }, MISS_MS);
+  }
+  function cancelMiss() {
+    if (timer.miss) { clearTimeout(timer.miss); timer.miss = 0; }
+    $('session-chips').classList.remove('miss');
+  }
+
 
   const stage = () => STAGES[stageIdx];
   const rep = () => reps[repIdx];
@@ -87,6 +134,7 @@
 
   function setPhase(p) {
     phase = p;
+    if (p === 'turn') timerStart(); else timerStop();
     V.app.refreshMic();
     render();
   }
@@ -103,7 +151,9 @@
   }
 
   function startRep() {
+    cancelMiss();
     noteIdx = 0;
+    timer.used = 0; timer.from = null;
     renderChips();
     listen();
   }
@@ -136,6 +186,7 @@
     if (hit) celebrate(noteIdx);
     holder.reset();
     noteIdx++;
+    timerReset();
     if (noteIdx < rep().notes.length) { render(); return; }
     repIdx++;
     if (repIdx < reps.length) startRep();
@@ -175,6 +226,7 @@
     });
     chart.setTarget(m, rep().notes);
     if (phase !== 'turn') chart.progress(0);
+    drawTimer();
   }
 
   function onFrame(hz, clarity) {
@@ -193,6 +245,11 @@
   $('session-skip').addEventListener('click', () => {
     if (phase === 'listen') { stopPlayback(); turn(); } else if (phase === 'turn') advance();
   });
+  // Restart: back to the first rep of this warm-up, from wherever you are (paused included).
+  $('session-restart').addEventListener('click', () => {
+    if (phase === 'done') return;
+    startStage(stageIdx);
+  });
   $('session-pause').addEventListener('click', () => {
     if (phase === 'paused') { if (pausedFrom === 'listen') listen(); else setPhase('turn'); return; }
     if (phase !== 'listen' && phase !== 'turn') return;
@@ -206,7 +263,7 @@
       onlyOne = !!params.only;
       chart.start(); unsubscribe = V.audio.onPitch(onFrame); startStage(params.stage || 0);
     },
-    leave() { stopPlayback(); chart.stop(); if (unsubscribe) unsubscribe(); phase = 'listen'; },
+    leave() { stopPlayback(); cancelMiss(); timerStop(); chart.stop(); if (unsubscribe) unsubscribe(); phase = 'listen'; },
     wantsMic: () => phase === 'turn'
   });
 })(window.V = window.V || {});

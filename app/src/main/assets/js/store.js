@@ -7,12 +7,13 @@
     names: ['letters', 'solfege', 'both'],
     hold: [0.3, 0.6, 1],
     tolerance: [50, 25, 10],
+    noteTime: [0, 5, 8, 12],   // seconds to hit each warm-up note before the rep starts over; 0 is off
     screenOn: ['tuner', 'always'],
     theme: ['system', 'light', 'dark'],
     challengeLevel: ['echo', 'scale', 'down', 'thirds', 'arpeggio', 'leaps', 'minor', 'intervals']
   };
   const DEFAULTS = {
-    mode: 'chromatic', a4: 440, tunerView: 'dial', names: 'both', hold: 0.6, tolerance: 25, screenOn: 'tuner', theme: 'system', challengeLevel: 'scale', bests: {}, rangeHistory: [],
+    mode: 'chromatic', a4: 440, tunerView: 'dial', names: 'both', hold: 0.6, tolerance: 25, noteTime: 8, screenOn: 'tuner', theme: 'system', challengeLevel: 'scale', bests: {}, rangeHistory: [],
     range: null,          // { low, high, tested: 'YYYY-MM-DD' }
     challengeRoot: null   // MIDI tonic of the challenge scale; null picks one from the range
   };
