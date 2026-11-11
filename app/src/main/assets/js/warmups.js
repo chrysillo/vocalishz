@@ -20,7 +20,8 @@
   const STEP_MS = 600;   // note spacing when the app plays a rep
   const SLIDE_TOLERANCE = 50;
   const SLIDE_HOLD = 0.3;
-  const MISS_MS = 700;   // how long the miss shows before the rep plays again
+  const MISS_MS = 700;
+  const PREVIEW_S = 1;   // a tapped note plays this long; the note timer stops for it   // how long the miss shows before the rep plays again
 
   /** The reps of a stage for a range: [{ root, notes }], kept inside the range. */
   function plan(stage, range) {
@@ -198,9 +199,20 @@
   function noteLabel(m) { return V.notes.label(m, rep().root, stage().siren ? 'letters' : V.store.get('names')); }
 
   function renderChips() {
-    $('session-chips').replaceChildren(...rep().notes.map((m) => {
-      return el('span', { text: noteLabel(m).main });
+    $('session-chips').replaceChildren(...rep().notes.map((m, i) => {
+      return el('button', { text: noteLabel(m).main, 'aria-label': 'Play ' + noteLabel(m).main, onclick: () => preview(i) });
     }));
+  }
+
+  /** Tap a note to hear it on its own. Only between plays of the rep (your turn or paused), and the
+   *  note timer is given back the time the note sounds, since the mic ignores you while it plays. */
+  function preview(i) {
+    if (phase !== 'turn' && phase !== 'paused') return;
+    V.audio.playNote(rep().notes[i], PREVIEW_S);
+    if (timer.from !== null) timer.from = Math.min(performance.now(), timer.from + PREVIEW_S * 1000);
+    else timer.used = Math.max(0, timer.used - PREVIEW_S * 1000);
+    const chip = $('session-chips').children[i];
+    chip.classList.remove('play'); void chip.offsetWidth; chip.classList.add('play');
   }
 
   function render() {
@@ -220,8 +232,8 @@
     $('session-cue').textContent = phase === 'listen' ? 'Listen' : phase === 'paused' ? 'Paused' : 'Sing';
     $('session-note').textContent = label.main;
     $('session-aside').textContent = label.aside || '';
-    $('session-chips').querySelectorAll('span').forEach((c, i) => {
-      const hit = c.classList.contains('hit') ? ' hit' : '';
+    Array.from($('session-chips').children).forEach((c, i) => {
+      const hit = ['hit', 'play'].filter((k) => c.classList.contains(k)).map((k) => ' ' + k).join('');
       c.className = (i < noteIdx ? 'done' : i === shown ? 'current' : '') + hit;
     });
     chart.setTarget(m, rep().notes);
