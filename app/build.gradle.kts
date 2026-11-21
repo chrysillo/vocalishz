@@ -9,8 +9,9 @@ android {
         applicationId = "com.chris.vocalishz"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.5"
+        // CI passes -PversionCode and -PversionName so every build on main installs over the last one.
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 5
+        versionName = (findProperty("versionName") as String?) ?: "0.5"
     }
     buildTypes {
         release {

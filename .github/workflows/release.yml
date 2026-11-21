@@ -1,0 +1,73 @@
+# Every push to main that touches the app builds a test APK, runs the tests and publishes it as
+# the latest GitHub release, so testers can always install from
+# https://github.com/<owner>/<repo>/releases/latest/download/vocalishz.apk
+#
+# The APK is signed with the debug keystore from the DEBUG_KEYSTORE_BASE64 secret, the same key
+# earlier builds used, so each release installs over the previous one.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      BASE_VERSION: '0.5'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Install the signing key
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$DEBUG_KEYSTORE_BASE64" || { echo "DEBUG_KEYSTORE_BASE64 secret is missing"; exit 1; }
+          mkdir -p ~/.android
+          echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > ~/.android/debug.keystore
+
+      - name: Version
+        id: version
+        # versionCode 5 was the first published build; each run goes above it.
+        run: |
+          echo "code=$((5 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
+          echo "name=$BASE_VERSION.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: ./gradlew assembleDebug test -PversionCode=${{ steps.version.outputs.code }} -PversionName=${{ steps.version.outputs.name }}
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk vocalishz.apk
+          cat > notes.md <<'EOF'
+          Test build for trying the app out. Android 8.0 or newer.
+
+          **Install:** on your phone, tap **vocalishz.apk** under Assets and open the download. If Android asks, allow installs from your browser ("Install unknown apps"); if Play Protect warns about an unknown developer, tap **Install anyway**. Newer builds install over older ones, and your settings are kept.
+          EOF
+          gh release create "v$VERSION" vocalishz.apk \
+            --target "$GITHUB_SHA" \
+            --title "Vocalishz $VERSION (test build)" \
+            --notes-file notes.md \
+            --generate-notes \
+            --latest
