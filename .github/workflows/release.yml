@@ -2,8 +2,8 @@
 # the latest GitHub release, so testers can always install from
 # https://github.com/<owner>/<repo>/releases/latest/download/vocalishz.apk
 #
-# The APK is signed with the debug keystore from the DEBUG_KEYSTORE_BASE64 secret, the same key
-# earlier builds used, so each release installs over the previous one.
+# If the DEBUG_KEYSTORE_BASE64 secret is set, the APK is signed with that debug keystore, so each
+# release installs over the previous one; otherwise testers uninstall before installing a new one.
 name: Release
 
 on:
@@ -39,8 +39,10 @@ jobs:
       - name: Install the signing key
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        # Optional: without the secret the runner signs with a fresh debug key, and testers have to
+        # uninstall the old build before installing a new one.
         run: |
-          test -n "$DEBUG_KEYSTORE_BASE64" || { echo "DEBUG_KEYSTORE_BASE64 secret is missing"; exit 1; }
+          if [ -z "$DEBUG_KEYSTORE_BASE64" ]; then echo "::warning::No DEBUG_KEYSTORE_BASE64 secret: signing with a new debug key"; exit 0; fi
           mkdir -p ~/.android
           echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > ~/.android/debug.keystore
 
@@ -63,7 +65,7 @@ jobs:
           cat > notes.md <<'EOF'
           Test build for trying the app out. Android 8.0 or newer.
 
-          **Install:** on your phone, tap **vocalishz.apk** under Assets and open the download. If Android asks, allow installs from your browser ("Install unknown apps"); if Play Protect warns about an unknown developer, tap **Install anyway**. Newer builds install over older ones, and your settings are kept.
+          **Install:** on your phone, tap **vocalishz.apk** under Assets and open the download. If Android asks, allow installs from your browser ("Install unknown apps"); if Play Protect warns about an unknown developer, tap **Install anyway**. If it says "App not installed", uninstall your old Vocalishz first, then install this one.
           EOF
           gh release create "v$VERSION" vocalishz.apk \
             --target "$GITHUB_SHA" \
