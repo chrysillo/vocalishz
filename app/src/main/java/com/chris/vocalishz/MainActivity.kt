@@ -141,11 +141,22 @@ class MainActivity : Activity() {
         if (!resumed) return
         if (!hasMic()) { requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1); return }
         if (detector == null) {
-            detector = PitchDetector { hz, clarity, level ->
-                js("window.onPitch && onPitch($hz,$clarity,$level)")
-            }.also { it.start() }
+            lateinit var d: PitchDetector
+            d = PitchDetector(
+                onPitch = { hz, clarity, level -> js("window.onPitch && onPitch($hz,$clarity,$level)") },
+                onError = { runOnUiThread { micFailed(d) } }
+            )
+            detector = d
+            d.start()
         }
         js("window.onMicState && onMicState('on')")
+    }
+
+    /** The microphone is busy or stopped delivering audio; the next startMic() tries again. */
+    private fun micFailed(d: PitchDetector) {
+        if (detector !== d) return  // a detector already replaced or stopped
+        detector = null
+        js("window.onMicState && onMicState('unavailable')")
     }
 
     private fun stopMic() {

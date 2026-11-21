@@ -6,6 +6,8 @@
   const { $, el, tuneState, formatTime } = V.ui;
   const LEVELS = V.courses.LEVELS;
   const level = () => LEVELS[V.store.get('challengeLevel')];
+  const PREVIEW_S = 1;   // a tapped chip plays its note this long, as in the warm-ups
+  const STEP_MS = 600;   // note spacing when Listen plays the course, as in the warm-ups
 
   const tracker = new V.pitch.Tracker();
   const holder = new V.pitch.Holder();
@@ -13,6 +15,7 @@
     (m) => V.notes.label(m, root(), V.store.get('names')).main);
   let phase = 'ready';      // ready | playing | done
   let step = 0, startedAt = 0, finishedIn = 0, newBest = false, clock = null, unsubscribe = null;
+  let listenIdx = -1, cancelListen = null;   // Listen playing the course before a run
 
   /** Lowest tonic whose octave fits inside the range, preferring C. */
   function defaultRoot() {
@@ -34,19 +37,50 @@
     const style = V.store.get('names'), list = notes();
     const playing = phase === 'playing';
     game.set(list, phase === 'done' ? list.length : step, root());
-    const current = list[Math.min(step, list.length - 1)], label = V.notes.label(current, root(), style);
-    $('challenge-cue').textContent = phase === 'done' ? '' : playing ? 'Sing' : 'Start on';
+    const listening = listenIdx >= 0;
+    const current = list[listening ? listenIdx : Math.min(step, list.length - 1)], label = V.notes.label(current, root(), style);
+    $('challenge-cue').textContent = phase === 'done' ? '' : playing ? 'Sing' : listening ? 'Listen' : 'Start on';
     $('challenge-note').textContent = phase === 'done' ? '✓' : label.main;
     $('challenge-aside').textContent = phase === 'done' ? '' : label.aside || '';
-    // Each chip takes its wall's colour: solid once cleared, outlined while it's the one to sing.
+    // Each chip takes its wall's colour: solid once cleared, outlined while it's the one to sing (or
+    // the one Listen is playing). Before a run, tap one to hear its note, as in the warm-ups.
+    const ready = phase === 'ready';
     $('challenge-chips').replaceChildren(...list.map((m, i) => {
-      const done = phase === 'done' || i < step, current = playing && i === step;
-      return el('span', {
+      const done = phase === 'done' || i < step, current = (playing && i === step) || i === listenIdx;
+      const text = V.notes.label(m, root(), style).main;
+      return el(ready ? 'button' : 'span', Object.assign({
         class: done ? 'done' : current ? 'current' : '',
         style: done ? 'background:' + game.color(m) + ';color:#fff' : current ? 'background:transparent;color:inherit;box-shadow:inset 0 0 0 2px ' + game.color(m) : '',
-        text: V.notes.label(m, root(), style).main
-      });
+        text: text
+      }, ready ? { 'aria-label': 'Play ' + text, onclick: () => preview(i) } : {}));
     }));
+  }
+
+  /** Listen: plays the course before a run, a note at a time; tapping it again stops. */
+  function listen() {
+    if (cancelListen) { stopListen(); return; }
+    if (phase !== 'ready') return;
+    $('challenge-listen').classList.add('on');
+    listenIdx = 0;
+    cancelListen = V.audio.playSequence(notes(), STEP_MS, (i) => { listenIdx = i; renderLadder(); }, stopListen);
+    renderLadder();
+  }
+
+  function stopListen() {
+    if (cancelListen) cancelListen();
+    cancelListen = null;
+    $('challenge-listen').classList.remove('on');
+    if (listenIdx < 0) return;
+    listenIdx = -1;
+    renderLadder();
+  }
+
+  /** Plays a chip's note on its own. Before a run only, and not while Listen is playing. */
+  function preview(i) {
+    if (phase !== 'ready' || cancelListen) return;
+    V.audio.playNote(notes()[i], PREVIEW_S);
+    const chip = $('challenge-chips').children[i];
+    chip.classList.remove('play'); void chip.offsetWidth; chip.classList.add('play');
   }
 
   function hitChip(i) {
@@ -81,6 +115,7 @@
   function stopClock() { if (clock) { clearInterval(clock); clock = null; } }
 
   function start() {
+    stopListen();
     step = 0; startedAt = Date.now();
     if (level().random && phase === 'done') newCourse();  // a fresh course for each retry
     tracker.reset(); holder.reset(); game.reset();
@@ -126,6 +161,7 @@
   Object.keys(LEVELS).forEach((k) => levelSelect.append(el('option', { value: k, text: LEVELS[k].name })));
   levelSelect.value = V.store.get('challengeLevel');
   levelSelect.addEventListener('change', () => V.store.set('challengeLevel', levelSelect.value));
+  $('challenge-listen').addEventListener('click', listen);
   $('challenge-start').addEventListener('click', start);
   $('challenge-again').addEventListener('click', start);
   $('challenge-stop').addEventListener('click', () => stop('ready'));
@@ -133,13 +169,13 @@
   $('challenge-key-up').addEventListener('click', () => V.store.set('challengeRoot', root() + 1));
   V.store.onChange((key) => {
     if (key === 'challengeLevel') levelSelect.value = V.store.get('challengeLevel');
-    if (key === 'challengeRoot' || key === 'range' || key === 'challengeLevel') course = null;
+    if (key === 'challengeRoot' || key === 'range' || key === 'challengeLevel') { stopListen(); course = null; }
     if (key === 'challengeRoot' || key === 'range' || key === 'names' || key === 'challengeLevel') { if (phase !== 'playing') phase = 'ready'; render(); }
   });
 
   V.app.register('challenge', {
     enter() { game.start(); unsubscribe = V.audio.onPitch(onFrame); phase = 'ready'; render(); },
-    leave() { if (unsubscribe) unsubscribe(); game.stop(); stopClock(); phase = 'ready'; },
+    leave() { stopListen(); if (unsubscribe) unsubscribe(); game.stop(); stopClock(); phase = 'ready'; },
     wantsMic: () => phase === 'playing'
   });
 })(window.V = window.V || {});

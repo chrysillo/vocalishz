@@ -10,7 +10,7 @@ The two tabs do different jobs, and each follows its own teaching order.
 |---|---|---|
 | Purpose | Get the voice ready | Test ear and pitch control |
 | Feel | Gentle, guided, can't fail | A game: timed, best times kept |
-| Prompts | Each rep is played first, then sung back | No reference tones; sing from memory |
+| Prompts | Each rep is played first, then sung back | Before the run, Listen plays the course and a tapped chip plays its note; during it, nothing is played (except on Echo) and you sing from memory |
 | Order | Middle of the range outwards: easy note → slides → steps → arpeggios → full-range siren | Steps → thirds → arpeggio → fifths and octaves |
 | Tolerance | Slides use a fixed ±50 cents; other stages use the setting | The setting (Easy / Medium / Strict) |
 

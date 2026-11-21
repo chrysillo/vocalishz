@@ -5,7 +5,7 @@ const vm = require('vm');
 
 const JS = path.join(__dirname, '../../main/assets/js');
 
-function load(files, { saved = null, now = () => 0 } = {}) {
+function load(files, { saved = null, now = () => 0, android = null } = {}) {
   const store = new Map(saved == null ? [] : [['vocalishz', saved]]);
   const window = {
     localStorage: {
@@ -13,9 +13,10 @@ function load(files, { saved = null, now = () => 0 } = {}) {
       setItem: (k, v) => store.set(k, String(v))
     }
   };
-  const ctx = vm.createContext({ window, localStorage: window.localStorage, Date: { now } });
+  if (android) window.Android = android;
+  const ctx = vm.createContext({ window, localStorage: window.localStorage, Android: android, Date: { now } });
   files.forEach((f) => vm.runInContext(fs.readFileSync(path.join(JS, f), 'utf8'), ctx, { filename: f }));
-  return { V: window.V, saved: () => store.get('vocalishz') };
+  return { V: window.V, window, saved: () => store.get('vocalishz') };
 }
 
 module.exports = { load };

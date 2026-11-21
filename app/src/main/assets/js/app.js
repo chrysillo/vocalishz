@@ -107,10 +107,16 @@
   V.store.onChange(renderSliders);
 
   // ---- microphone notice ----
+  const MIC_MSG = {
+    denied: 'Microphone access is off. Tap to ask again, or allow it in Settings > Apps > Vocalishz.',
+    unavailable: 'The microphone is busy or unavailable. Tap to try again.'
+  };
   V.audio.onMicState((state) => {
-    $('mic-msg').hidden = state !== 'denied';
+    $('mic-msg').hidden = !MIC_MSG[state];
+    if (MIC_MSG[state]) $('mic-msg').textContent = MIC_MSG[state];
   });
-  // Tapping the notice asks for the microphone again (Android shows its own prompt or nothing if blocked).
+  // Tapping the notice asks for the microphone again (Android shows its own prompt or nothing if
+  // blocked; a busy mic is simply retried).
   $('mic-msg').addEventListener('click', () => { if (V.audio.native) V.app.refreshMic(); });
 
   // Screens register themselves in the scripts after this one; start once they all have.

@@ -27,9 +27,9 @@ No third-party dependencies, only the Android framework (JUnit for unit tests; t
 | `PitchDetector.kt` | Mic capture (`AudioRecord`, 44.1 kHz decimated to 22.05 kHz) on its own thread |
 | `Yin.kt` | YIN pitch detection, pure Kotlin with no Android APIs; tested in `app/src/test/.../YinTest.kt` |
 
-- Native to JS: `onPitch(hz, clarity, level)` about 43 times a second (`hz` is 0 when silent or unclear), `onMicState('on'|'denied')`.
+- Native to JS: `onPitch(hz, clarity, level)` about 43 times a second (`hz` is 0 when silent or unclear), `onMicState('on'|'denied'|'unavailable')`. `unavailable` means the mic couldn't be opened or stopped delivering audio (held by a call or another app, or the audio server restarted); capture ends and the next `startMic()` tries again.
 - JS to native: `Android.startMic()`, `Android.stopMic()`, `Android.playTone(hz, seconds)`, `Android.keepScreenOn(on)`, `Android.setTheme('system'|'light'|'dark')` (kept in SharedPreferences and applied to the window and system bars at start-up). `playTone` ignores non-finite values and clamps `hz` to 20–5000 and `seconds` to 0.05–5; a new tone replaces one still playing.
-- The mic runs only on screens that listen (Tuner, range test, your turn in a warm-up, a running challenge) and only while the app is in the foreground: a `startMic()` made while paused waits for `onResume`. The WebView and its timers pause with the app. If access is denied, tapping the notice asks again.
+- The mic runs only on screens that listen (Tuner, range test, your turn in a warm-up, a running challenge) and only while the app is in the foreground: a `startMic()` made while paused waits for `onResume`. The WebView and its timers pause with the app. If access is denied or the mic is unavailable, a notice says so and tapping it asks again.
 - YIN settings: 2048-sample window, hop 512, threshold 0.15, range 35 to 1600 Hz. `YinTest` pins under 2 cents of error on synthetic tones from 41 Hz (bass low E) to 1047 Hz.
 - Settings are stored in `localStorage` under the key `vocalishz`: `{ mode, a4, tunerView, names, hold, tolerance, screenOn, theme, range, challengeRoot, challengeLevel, bests, rangeHistory }`.
 - Targets Android 16 (SDK 36, edge-to-edge, so the root view pads for the system bars; back uses `OnBackInvokedCallback` on Android 13+); min SDK 26. Portrait only, by design.
@@ -40,7 +40,7 @@ No third-party dependencies, only the Android framework (JUnit for unit tests; t
 - **Tuner:** instrument dropdown (Chromatic; Guitar standard, Drop D, DADGAD; Bass 4- and 5-string; Ukulele), dial or bar view; reads the nearest note in every mode; string buttons play their note and get a check mark once tuned; screen stays on.
 - **Settings:** voice type, range and keyboard; range test with a result screen and history; note names; hold time; pitch tolerance (slider, ±5 to ±50 cents); time per note for warm-ups; A4 reference; tuner view; keep screen on; theme (System, Light, Dark).
 - **Warm-ups:** six stages from the middle of the range outwards, each startable on its own, each with the sound to sing it on (hum, lip trill, "ah"), with a scrolling pitch chart. A restart button takes the warm-up back to its first rep, and a per-note timer (Off, 5, 8 or 12 s in Settings; default 8) sends the rep back to its first note when time runs out. Tap any note chip to hear that note on its own.
-- **Challenge, Thread the Needle:** eight levels from Echo (match by ear) to Random intervals, best time per level.
+- **Challenge, Thread the Needle:** eight levels from Echo (match by ear) to Random intervals, best time per level. Before a run, Listen plays the course and tapping a note chip plays that note, as in the warm-ups.
 - Not yet tested with a real instrument or voice on the phone.
 
 ## Priorities
@@ -49,6 +49,8 @@ Held to the highest bar: mic capture and pitch detection (`PitchDetector.kt`, `Y
 ## Known debt
 - Screen scripts (`tuner.js`, `warmups.js`, `challenge.js`, `range.js`, `voice.js`) and the canvas views (`chart.js`, `holes.js`) have no tests; only the pure modules (`notes.js`, `store.js`, `pitch.js`, `courses.js`) do.
 - Not yet tested with a real instrument or voice on the phone.
+- `chart.js` still has the unused rungs-and-ball mode from an earlier challenge design.
+- The challenge's sky and star colours are hard-coded in `holes.js` rather than defined in `design/theme-canyon.json`.
 
 ## Ideas
 See [docs/ROADMAP.md](docs/ROADMAP.md#next).
